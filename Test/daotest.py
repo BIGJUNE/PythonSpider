@@ -1,14 +1,14 @@
 # -*- coding:utf-8 -*-
 import unittest
 import datetime
-from main import dao
+from src import dao
 
 
 class TestDao(unittest.TestCase):
 
     def test_batchinsert(self):
         t1 = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-        r1 = ('batchtest1', t1, 'www.baidu.com')
+        r1 = ('中國龍', t1, 'www.baidu.com')
         t2 = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
         r2 = ('batchtest2', t2, 'www.baidu.com')
         t3 = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
