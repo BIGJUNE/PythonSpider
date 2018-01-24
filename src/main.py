@@ -1,5 +1,5 @@
 # -*- coding:utf-8 -*-
-from src import dao, pool, dbpool
+from src import pool, dbpool
 import threading
 import logging
 import time
@@ -8,12 +8,9 @@ logging.basicConfig(level=logging.DEBUG,
                     format='%(asctime)s %(filename)s[line:%(lineno)d] %(levelname)s %(message)s',
                     datefmt='%a, %d %b %Y %H:%M:%S')
 # init thread pool
-thread_pool = pool.ThreadPool(4)
+thread_pool = pool.ThreadPool(2)
 # init db pool
 db_pool = dbpool.db_pool
-# get thread lock
-lock_list = thread_pool.lock_data_list
-data_list = thread_pool.data_list
 
 loop = True
 logging.debug("Start the thread pool")
@@ -30,24 +27,33 @@ def insert_data(data=[]):
     conn = db_pool.get_connect()
     try:
         logging.debug("size = %d ready to insert" % len(data))
-        with conn.cursor() as cursor:
-            sql = 'insert into info(content, comment_time, user_name) values(%s, %s, %s)'
-            cursor.executemany(sql, data)
-            conn.commit()
+        cursor = conn.cursor()
+        sql = 'insert into info( song_name, singer_name, pub_time, rating_num) values(%s, %s, %s, %s)'
+        cursor.executemany(sql, data)
+        conn.commit()
         logging.debug("Insert Finished")
     finally:
+        cursor.close()
         conn.close()
 
 
-while loop:
-    if len(data_list) >= 1000:
-        lock_list.acquire()
-        try:
-            insert_list = data_list[:]
-            data_list.clear()
+def main(tp):
+    data_list = tp.data_list
+    while loop:
+        logging.debug("******The data_list has %d record*****" % len(data_list))
+        if len(data_list) >= 100:
+            tp.lock_list.acquire()
+            try:
+                insert_list = data_list[:]
+                data_list.clear()
+            finally:
+                tp.lock_list.release()
             logging.debug("Create Thread to insert data... size[%d] " % len(insert_list))
             db_thread = threading.Thread(target=insert_data, args=(insert_list,))
             db_thread.start()
-        finally:
-            lock_list.release()
-    time.sleep(1)
+        time.sleep(1)
+
+
+main_thread = threading.Thread(target=main, args=(thread_pool,))
+main_thread.start()
+

@@ -1,7 +1,6 @@
 # -*- coding:utf-8 -*-
 import unittest
 import datetime
-from src import dao
 
 
 class TestDao(unittest.TestCase):
@@ -16,4 +15,4 @@ class TestDao(unittest.TestCase):
         t4 = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
         r4 = ('batchtest4', t4, 'www.baidu.com')
         rows = [r1, r2, r3, r4]
-        dao.insert_data(rows)
+        # dao.insert_data(rows)

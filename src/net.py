@@ -1,6 +1,7 @@
 # -*- coding:utf-8 -*-
 import requests
 import logging
+import time
 from bs4 import BeautifulSoup
 __author__ = 'JackGao'
 
@@ -16,6 +17,7 @@ tag_list = ['日本', '台湾', '欧美', '美国', '英国', '香港', '华语'
 base_url = 'https://music.douban.com/tag/%s?start=%d&type=R'
 header = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) '
                         'Chrome/51.0.2704.63 Safari/537.36'}
+proxies = {"http": "116.199.2.210:80"}
 
 
 def open_url(tag, page, cookie=''):
@@ -25,7 +27,7 @@ def open_url(tag, page, cookie=''):
     if cookie:
         temp_header['Cookie'] = cookie
 
-    r = requests.get(cur_url, headers=temp_header)
+    r = requests.get(cur_url, proxies=proxies, headers=temp_header)
     return r
 
 
@@ -34,19 +36,17 @@ def parse_content(content):
     b = b.select('#subject_list .pl2')
     result = []
     for item in b:
-        song_name = item.a.string
+        if not item.a:
+            return []
+        song_name = item.a.get_text()
+        replace_string = item.a.span
+        if replace_string:
+            song_name = song_name.replace(replace_string.get_text(), '')
+        song_name = song_name.strip().replace('\n', '')
         strings = item.p.string.split('/')
-        singer_name = strings[0]
-        pub_date = strings[1]
+        singer_name = strings[0].strip()
+        pub_date = strings[1].strip()
         rate = item.find_all('span', class_='rating_nums')[0].get_text()
         row = (song_name, singer_name, pub_date, rate)
         result.append(row)
     return result
-
-
-r = open_url(0, 0)
-if r.status_code == 200:
-    list1 = parse_content(r.text)
-print(list1)
-
-
